@@ -62,21 +62,7 @@
       gap: 6px;
       margin-bottom: 8px;
     }
-    .brand-svg { display: block; }
-    .brand-tagline {
-      font-size: 12px;
-      color: var(--grey-500);
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .brand-tagline::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-    }
+    .brand-svg { display: block; height: auto; max-width: 100%; }
     .product-label {
       font-size: 11px;
       color: var(--grey-500);
@@ -243,7 +229,7 @@
       width: fit-content;
       letter-spacing: 0.5px;
     }
-    .admin-pill::before { content: '★'; }
+    .admin-pill::before { content: 'STAR'; }
     .members-section {
       background: var(--white);
       border: 1px solid var(--grey-100);
@@ -503,12 +489,7 @@
 
     <div class="screen active" id="screen-welcome">
       <div class="brand">
-        <svg class="brand-svg" width="220" height="68" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
-          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
-          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
-          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
-        </svg>
-        <div class="brand-tagline">Design &amp; Experiences</div>
+        <img class="brand-svg" src="hivedx-logo.png" alt="HiveDX" width="240" />
         <div class="product-label">Event Clearcoms</div>
       </div>
       <p class="hero-text">
@@ -520,11 +501,7 @@
 
     <div class="screen" id="screen-choice">
       <div class="brand">
-        <svg class="brand-svg" width="180" height="56" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
-          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
-          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
-          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
-        </svg>
+        <img class="brand-svg" src="hivedx-logo.png" alt="HiveDX" width="200" />
         <div class="product-label">Event Clearcoms</div>
       </div>
       <h1 class="center-text">What would you like to do?</h1>
@@ -533,7 +510,7 @@
     </div>
 
     <div class="screen" id="screen-create">
-      <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
+      <button class="btn btn-back" onclick="goTo('screen-choice')">Back</button>
       <h1>Create an Event</h1>
       <h2>Fill in the details to generate an event code.</h2>
 
@@ -572,7 +549,7 @@
     </div>
 
     <div class="screen" id="screen-join">
-      <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
+      <button class="btn btn-back" onclick="goTo('screen-choice')">Back</button>
       <h1>Join an Event</h1>
       <h2>Enter the code shared with you.</h2>
 
@@ -590,7 +567,7 @@
     <div class="screen wide" id="screen-lobby">
       <div class="event-info-bar">
         <div class="event-name" id="lobby-event-name">Event Name</div>
-        <div class="event-meta" id="lobby-event-meta">Client • Venue • Date</div>
+        <div class="event-meta" id="lobby-event-meta">Client - Venue - Date</div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <div class="event-code-pill" id="lobby-event-code">CODE</div>
           <div id="admin-badge" class="admin-pill" style="display:none;">Admin</div>
@@ -616,8 +593,8 @@
       </div>
 
       <button class="btn btn-primary" onclick="joinConversation()">Join the Conversation</button>
-      <button class="btn btn-secondary" id="btn-create-channel" onclick="openPrivateChannelModal()" style="display:none;">+ Create Private Channel</button>
-      <button class="btn btn-back" onclick="leaveEvent()">← Leave Event</button>
+      <button class="btn btn-secondary" id="btn-create-channel" onclick="openPrivateChannelModal()" style="display:none;">Create Private Channel</button>
+      <button class="btn btn-back" onclick="leaveEvent()">Leave Event</button>
     </div>
 
     <div class="screen wide" id="screen-talk">
@@ -652,11 +629,7 @@
 
     <div class="screen" id="screen-loading">
       <div class="brand">
-        <svg class="brand-svg" width="180" height="56" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
-          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
-          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
-          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
-        </svg>
+        <img class="brand-svg" src="hivedx-logo.png" alt="HiveDX" width="200" />
       </div>
       <div class="loader"></div>
       <div class="center-text" style="color:var(--grey-500);" id="loading-text">Connecting...</div>
