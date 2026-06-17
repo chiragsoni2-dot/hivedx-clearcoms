@@ -2,219 +2,340 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HIVEDX Event Clearcoms</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FFB800" />
+  <title>HiveDX Event Clearcoms</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFB800;
+      --yellow-hover: #ffc933;
+      --yellow-soft: #fff7d6;
+      --grey-900: #2D2D2D;
+      --grey-700: #4A4A4A;
+      --grey-500: #6B6B6B;
+      --grey-300: #B8B8B8;
+      --grey-200: #D9D9D9;
+      --grey-100: #ECECEC;
+      --grey-50: #F5F5F5;
+      --white: #FFFFFF;
+      --green: #4CAF50;
+      --red: #E63946;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+      --radius: 14px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
     html, body {
       height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-      color: #fff;
-      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--grey-50);
+      color: var(--grey-900);
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
+    body { min-height: 100vh; min-height: 100dvh; }
     .app {
-      height: 100vh;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      justify-content: flex-start;
+      padding: 24px 20px calc(24px + var(--safe-bottom));
     }
     .screen {
       width: 100%;
-      max-width: 480px;
+      max-width: 460px;
       display: none;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
+      margin: auto 0;
     }
     .screen.active { display: flex; }
-    .screen.wide { max-width: 720px; }
-
-    /* Logo & Branding */
+    .screen.wide { max-width: 680px; }
     .brand {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .brand-logo {
-      font-size: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
       margin-bottom: 8px;
     }
-    .brand-name {
-      font-size: 28px;
-      font-weight: 700;
+    .brand-svg { display: block; }
+    .brand-tagline {
+      font-size: 12px;
+      color: var(--grey-500);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-tagline::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+    .product-label {
+      font-size: 11px;
+      color: var(--grey-500);
       letter-spacing: 2px;
-      color: #FFB800;
-    }
-    .brand-sub {
-      font-size: 14px;
-      color: #888;
+      text-transform: uppercase;
+      font-weight: 600;
       margin-top: 4px;
-      letter-spacing: 1px;
     }
-
-    h1 { font-size: 24px; margin-bottom: 8px; }
-    h2 { font-size: 18px; color: #aaa; font-weight: 500; }
-
-    /* Buttons */
+    h1 {
+      font-size: clamp(22px, 5vw, 26px);
+      font-weight: 700;
+      color: var(--grey-900);
+      letter-spacing: -0.4px;
+    }
+    h2 {
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--grey-500);
+      line-height: 1.5;
+    }
+    .center-text { text-align: center; }
     .btn {
       width: 100%;
-      padding: 16px 24px;
+      padding: 16px 20px;
+      min-height: 52px;
       border: none;
-      border-radius: 12px;
+      border-radius: var(--radius);
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.18s ease;
       font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      -webkit-appearance: none;
+      appearance: none;
     }
     .btn-primary {
-      background: #FFB800;
-      color: #000;
+      background: var(--yellow);
+      color: var(--grey-900);
+      box-shadow: 0 2px 10px rgba(255,184,0,0.35);
     }
-    .btn-primary:hover { background: #ffc933; transform: translateY(-2px); }
+    .btn-primary:hover, .btn-primary:active { background: var(--yellow-hover); transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--grey-200); color: var(--grey-500); box-shadow: none; cursor: not-allowed; }
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--white);
+      color: var(--grey-900);
+      border: 1.5px solid var(--grey-200);
     }
-    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    .btn-secondary:hover, .btn-secondary:active { background: var(--grey-50); border-color: var(--grey-300); }
     .btn-danger {
-      background: #e63946;
-      color: #fff;
+      background: var(--red);
+      color: var(--white);
     }
-    .btn-danger:hover { background: #f04557; }
-    .btn-mute { background: #444; color: #fff; }
-    .btn-mute.active { background: #FFB800; color: #000; }
+    .btn-danger:hover, .btn-danger:active { background: #d62b39; transform: translateY(-1px); }
+    .btn-mute {
+      background: var(--white);
+      color: var(--grey-900);
+      border: 1.5px solid var(--grey-200);
+    }
+    .btn-mute.muted {
+      background: var(--grey-900);
+      color: var(--white);
+      border-color: var(--grey-900);
+    }
     .btn-back {
       background: transparent;
-      color: #888;
-      padding: 8px;
+      color: var(--grey-500);
+      padding: 6px 0;
       width: auto;
+      min-height: auto;
       font-size: 14px;
+      font-weight: 500;
       align-self: flex-start;
+      box-shadow: none;
     }
-
-    /* Forms */
+    .btn-back:hover { color: var(--grey-700); }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 13px; color: #aaa; font-weight: 500; }
+    .form-group label {
+      font-size: 13px;
+      color: var(--grey-700);
+      font-weight: 600;
+    }
     .form-group input {
       padding: 14px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      color: #fff;
+      min-height: 50px;
+      background: var(--white);
+      border: 1.5px solid var(--grey-200);
+      border-radius: 12px;
+      color: var(--grey-900);
       font-size: 16px;
       font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
     }
+    .form-group input::placeholder { color: var(--grey-300); }
     .form-group input:focus {
       outline: none;
-      border-color: #FFB800;
-      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--yellow);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(255,184,0,0.18);
     }
-
-    /* Event code display */
     .event-code-card {
-      background: rgba(255, 184, 0, 0.1);
-      border: 2px dashed #FFB800;
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--yellow-soft);
+      border: 2px dashed var(--yellow);
+      border-radius: 18px;
+      padding: 28px 20px;
       text-align: center;
     }
-    .event-code-label { font-size: 13px; color: #aaa; margin-bottom: 8px; }
-    .event-code-value {
-      font-size: 36px;
-      font-weight: 700;
-      color: #FFB800;
-      letter-spacing: 4px;
-      font-family: 'Courier New', monospace;
+    .event-code-label {
+      font-size: 12px;
+      color: var(--grey-500);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 10px;
     }
-    .event-code-hint { font-size: 13px; color: #888; margin-top: 12px; }
-
-    /* Lobby */
+    .event-code-value {
+      font-size: clamp(28px, 8vw, 38px);
+      font-weight: 800;
+      color: var(--grey-900);
+      letter-spacing: 4px;
+      font-family: 'SF Mono', 'Courier New', monospace;
+      word-break: break-all;
+    }
+    .event-code-hint { font-size: 13px; color: var(--grey-500); margin-top: 14px; }
     .event-info-bar {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--white);
+      border: 1px solid var(--grey-100);
+      border-radius: 14px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      box-shadow: var(--shadow-sm);
     }
-    .event-info-bar .event-name { font-size: 18px; font-weight: 600; }
-    .event-info-bar .event-meta { font-size: 13px; color: #888; }
+    .event-info-bar .event-name { font-size: 17px; font-weight: 700; color: var(--grey-900); }
+    .event-info-bar .event-meta { font-size: 12.5px; color: var(--grey-500); line-height: 1.4; }
     .event-info-bar .event-code-pill {
       display: inline-block;
-      background: #FFB800;
-      color: #000;
+      background: var(--yellow);
+      color: var(--grey-900);
       padding: 4px 10px;
       border-radius: 6px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12.5px;
       letter-spacing: 1px;
-      margin-top: 4px;
+      margin-top: 6px;
       width: fit-content;
     }
-
+    .admin-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--yellow);
+      background: var(--yellow-soft);
+      padding: 3px 8px;
+      border-radius: 6px;
+      width: fit-content;
+      letter-spacing: 0.5px;
+    }
+    .admin-pill::before { content: '★'; }
     .members-section {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
-      padding: 16px;
-      max-height: 280px;
+      background: var(--white);
+      border: 1px solid var(--grey-100);
+      border-radius: 14px;
+      padding: 14px 16px;
+      max-height: 260px;
       overflow-y: auto;
+      box-shadow: var(--shadow-sm);
+      -webkit-overflow-scrolling: touch;
     }
     .section-title {
-      font-size: 13px;
-      color: #888;
+      font-size: 12px;
+      color: var(--grey-500);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .member-row {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 10px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--grey-100);
     }
     .member-row:last-child { border: none; }
     .member-avatar {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #FFB800, #ff8800);
+      background: linear-gradient(135deg, var(--yellow), #ffd34d);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      color: #000;
+      color: var(--grey-900);
       font-size: 14px;
+      flex-shrink: 0;
     }
-    .member-name { flex: 1; font-size: 15px; }
+    .member-name { flex: 1; font-size: 14.5px; color: var(--grey-900); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .member-status {
       font-size: 11px;
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 10px;
-      background: rgba(255, 184, 0, 0.2);
-      color: #FFB800;
+      background: var(--grey-100);
+      color: var(--grey-500);
+      font-weight: 600;
+      flex-shrink: 0;
     }
-    .member-status.live { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
-    .member-status.muted { background: rgba(244, 67, 54, 0.2); color: #f44336; }
-
+    .member-status.live { background: rgba(76,175,80,0.15); color: #2e7d32; }
+    .member-status.muted { background: rgba(230,57,70,0.12); color: var(--red); }
+    .member-status.admin { background: var(--yellow-soft); color: #a8740a; }
     .member-checkbox {
-      width: 20px;
-      height: 20px;
-      accent-color: #FFB800;
+      width: 22px;
+      height: 22px;
+      accent-color: var(--yellow);
+      flex-shrink: 0;
     }
-
-    /* In conversation screen */
+    .empty-list-msg {
+      text-align: center;
+      color: var(--grey-300);
+      padding: 24px 12px;
+      font-size: 14px;
+    }
+    .channel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--yellow-soft);
+      border: 1px solid var(--yellow);
+      color: #a8740a;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .talk-circle-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0;
+    }
     .talk-circle {
-      width: 200px;
-      height: 200px;
+      width: clamp(120px, 30vw, 180px);
+      height: clamp(120px, 30vw, 180px);
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,184,0,0.3) 0%, rgba(255,184,0,0) 70%);
-      margin: 20px auto;
+      background: radial-gradient(circle, rgba(255,184,0,0.25) 0%, rgba(255,184,0,0) 70%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -223,93 +344,99 @@
     .talk-circle::before {
       content: '';
       position: absolute;
-      inset: 40px;
+      inset: 22%;
       border-radius: 50%;
-      background: #FFB800;
+      background: var(--yellow);
       animation: pulse 2s infinite;
+      box-shadow: 0 6px 20px rgba(255,184,0,0.5);
     }
     .talk-circle.muted::before {
-      background: #444;
+      background: var(--grey-300);
+      box-shadow: none;
       animation: none;
     }
     @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
+      0%, 100% { transform: scale(0.95); opacity: 0.9; }
       50% { transform: scale(1.1); opacity: 1; }
     }
     .talk-icon {
       position: relative;
       z-index: 2;
-      font-size: 48px;
+      font-size: clamp(28px, 8vw, 40px);
     }
-
+    .talk-status-area { text-align: center; }
+    .talk-status-area .talk-status {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--grey-900);
+      margin-bottom: 2px;
+    }
+    .talk-status-area .talk-substatus {
+      font-size: 13px;
+      color: var(--grey-500);
+      line-height: 1.4;
+    }
     .controls-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-top: 20px;
+      position: sticky;
+      bottom: calc(12px + var(--safe-bottom));
+      background: var(--grey-50);
+      padding-top: 12px;
+      margin-top: auto;
+      z-index: 5;
     }
-    .controls-row .btn { padding: 18px; }
-
-    .channel-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 184, 0, 0.15);
-      border: 1px solid rgba(255, 184, 0, 0.4);
-      color: #FFB800;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      align-self: flex-start;
-    }
-
-    /* Modal for private channel */
+    .controls-row .btn { padding: 16px; font-size: 15px; }
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(45,45,45,0.55);
+      backdrop-filter: blur(2px);
       display: none;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
       z-index: 100;
-      padding: 20px;
+      padding: 16px;
     }
     .modal-overlay.active { display: flex; }
     .modal {
-      background: #1a1a2e;
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--white);
+      border-radius: 18px;
+      padding: 22px;
       width: 100%;
-      max-width: 420px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 440px;
+      box-shadow: var(--shadow-lg);
+      max-height: 90vh;
+      overflow-y: auto;
     }
-    .modal h3 { margin-bottom: 16px; font-size: 18px; }
-
-    /* Notifications */
+    .modal h3 { margin-bottom: 14px; font-size: 18px; color: var(--grey-900); }
+    .modal .hint { font-size: 12.5px; color: var(--grey-500); margin-bottom: 12px; }
     .toast {
       position: fixed;
-      top: 20px;
+      top: calc(16px + env(safe-area-inset-top, 0px));
       left: 50%;
       transform: translateX(-50%);
-      background: #FFB800;
-      color: #000;
-      padding: 12px 24px;
-      border-radius: 8px;
+      background: var(--grey-900);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: 10px;
       font-weight: 600;
+      font-size: 14px;
       z-index: 200;
       display: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow-lg);
+      max-width: calc(100% - 32px);
     }
-    .toast.error { background: #e63946; color: #fff; }
-
+    .toast.error { background: var(--red); color: var(--white); }
+    .toast.success { background: var(--green); color: var(--white); }
     .invite-banner {
-      background: linear-gradient(135deg, #FFB800, #ff8800);
-      color: #000;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--yellow), #ffcd4a);
+      color: var(--grey-900);
+      padding: 14px 16px;
+      border-radius: 14px;
       display: none;
+      box-shadow: var(--shadow-md);
     }
     .invite-banner.active { display: block; }
     .invite-banner-row {
@@ -318,21 +445,55 @@
       margin-top: 12px;
     }
     .invite-banner-row .btn {
-      padding: 8px 16px;
+      padding: 10px 16px;
       font-size: 14px;
+      min-height: 42px;
     }
-
-    .small-text { font-size: 12px; color: #666; text-align: center; }
     .loader {
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #FFB800;
+      border: 3px solid var(--grey-100);
+      border-top-color: var(--yellow);
       border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
+      width: 38px;
+      height: 38px;
+      animation: spin 0.8s linear infinite;
+      margin: 28px auto 12px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .hero-text {
+      text-align: center;
+      color: var(--grey-500);
+      line-height: 1.55;
+      font-size: 14.5px;
+      padding: 0 8px;
+    }
+    @media (max-width: 380px) {
+      .app { padding: 16px 14px calc(16px + var(--safe-bottom)); }
+      .screen { gap: 14px; }
+      h1 { font-size: 22px; }
+      .btn { padding: 14px 16px; min-height: 48px; font-size: 15px; }
+      .members-section { max-height: 200px; }
+      .event-code-value { letter-spacing: 3px; }
+    }
+    @media (max-height: 700px) {
+      .talk-circle { width: 110px; height: 110px; }
+      .talk-icon { font-size: 26px; }
+      .members-section { max-height: 160px; }
+      .brand { margin-bottom: 0; }
+    }
+    @media (max-height: 600px) {
+      .talk-circle-wrap { padding: 0; }
+      .talk-circle { width: 80px; height: 80px; }
+      .talk-icon { font-size: 20px; }
+      .members-section { max-height: 120px; }
+    }
+    @media (min-width: 600px) {
+      .app { padding: 36px 24px calc(36px + var(--safe-bottom)); }
+      .screen { gap: 22px; }
+    }
+    @media (min-width: 900px) {
+      .app { padding: 48px 24px calc(48px + var(--safe-bottom)); }
+      .members-section { max-height: 340px; }
+    }
   </style>
 </head>
 <body>
@@ -340,32 +501,37 @@
 
   <div class="app">
 
-    <!-- ================ SCREEN 1: WELCOME ================ -->
     <div class="screen active" id="screen-welcome">
       <div class="brand">
-        <div class="brand-logo">🎧</div>
-        <div class="brand-name">HIVEDX</div>
-        <div class="brand-sub">EVENT CLEARCOMS</div>
+        <svg class="brand-svg" width="220" height="68" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
+          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
+          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
+          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
+        </svg>
+        <div class="brand-tagline">Design &amp; Experiences</div>
+        <div class="product-label">Event Clearcoms</div>
       </div>
-      <p style="text-align:center; color:#aaa; line-height:1.5;">
+      <p class="hero-text">
         Open-network voice for your event crew.<br/>
         No dialing. No headsets. Just talk.
       </p>
       <button class="btn btn-primary" onclick="goTo('screen-choice')">Enter</button>
     </div>
 
-    <!-- ================ SCREEN 2: CREATE OR JOIN ================ -->
     <div class="screen" id="screen-choice">
       <div class="brand">
-        <div class="brand-logo">🎧</div>
-        <div class="brand-name">HIVEDX</div>
+        <svg class="brand-svg" width="180" height="56" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
+          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
+          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
+          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
+        </svg>
+        <div class="product-label">Event Clearcoms</div>
       </div>
-      <h1 style="text-align:center;">What would you like to do?</h1>
+      <h1 class="center-text">What would you like to do?</h1>
       <button class="btn btn-primary" onclick="goTo('screen-create')">Create an Event</button>
       <button class="btn btn-secondary" onclick="goTo('screen-join')">Join an Event</button>
     </div>
 
-    <!-- ================ SCREEN 3: CREATE EVENT ================ -->
     <div class="screen" id="screen-create">
       <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
       <h1>Create an Event</h1>
@@ -373,40 +539,38 @@
 
       <div class="form-group">
         <label>Client Name</label>
-        <input id="in-client" placeholder="e.g., Acme Corp" />
+        <input id="in-client" placeholder="e.g., Acme Corp" autocomplete="off" />
       </div>
       <div class="form-group">
         <label>Event Name</label>
-        <input id="in-event" placeholder="e.g., Annual Conference 2026" />
+        <input id="in-event" placeholder="e.g., Annual Conference 2026" autocomplete="off" />
       </div>
       <div class="form-group">
         <label>Venue</label>
-        <input id="in-venue" placeholder="e.g., Mumbai Convention Hall" />
+        <input id="in-venue" placeholder="e.g., Mumbai Convention Hall" autocomplete="off" />
       </div>
       <div class="form-group">
         <label>Date</label>
         <input id="in-date" type="date" />
       </div>
       <div class="form-group">
-        <label>Your Name (so the team can see who you are)</label>
-        <input id="in-name-create" placeholder="e.g., Chirag" />
+        <label>Your Name <span style="color:var(--grey-300); font-weight:400;">(so the team can see who you are)</span></label>
+        <input id="in-name-create" placeholder="e.g., Chirag" autocomplete="given-name" />
       </div>
       <button class="btn btn-primary" onclick="submitCreateEvent()">Generate Event Code</button>
     </div>
 
-    <!-- ================ SCREEN 3b: EVENT CODE GENERATED ================ -->
     <div class="screen" id="screen-created">
-      <h1 style="text-align:center;">Your event is ready!</h1>
+      <h1 class="center-text">Your event is ready!</h1>
       <div class="event-code-card">
-        <div class="event-code-label">EVENT CODE</div>
+        <div class="event-code-label">Event Code</div>
         <div class="event-code-value" id="generated-code">------</div>
         <div class="event-code-hint">Share this code with your team so they can join.</div>
       </div>
-      <button class="btn btn-secondary" onclick="copyCode()">📋 Copy Code</button>
+      <button class="btn btn-secondary" onclick="copyCode()">Copy Code</button>
       <button class="btn btn-primary" onclick="enterEventAsCreator()">Enter Event</button>
     </div>
 
-    <!-- ================ SCREEN 4: JOIN EVENT ================ -->
     <div class="screen" id="screen-join">
       <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
       <h1>Join an Event</h1>
@@ -414,97 +578,102 @@
 
       <div class="form-group">
         <label>Event Code</label>
-        <input id="in-code" placeholder="e.g., HIVE-X7K9P" maxlength="11" style="text-transform: uppercase; letter-spacing: 2px; font-size: 20px; text-align: center;" />
+        <input id="in-code" placeholder="HIVE-XXXXX" maxlength="11" style="text-transform: uppercase; letter-spacing: 3px; font-size: 18px; text-align: center; font-weight: 700;" autocomplete="off" />
       </div>
       <div class="form-group">
         <label>Your Name</label>
-        <input id="in-name-join" placeholder="e.g., Chirag" />
+        <input id="in-name-join" placeholder="e.g., Chirag" autocomplete="given-name" />
       </div>
       <button class="btn btn-primary" onclick="joinEvent()">Enter Event</button>
     </div>
 
-    <!-- ================ SCREEN 5: EVENT LOBBY ================ -->
     <div class="screen wide" id="screen-lobby">
       <div class="event-info-bar">
         <div class="event-name" id="lobby-event-name">Event Name</div>
         <div class="event-meta" id="lobby-event-meta">Client • Venue • Date</div>
-        <div class="event-code-pill" id="lobby-event-code">CODE</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="event-code-pill" id="lobby-event-code">CODE</div>
+          <div id="admin-badge" class="admin-pill" style="display:none;">Admin</div>
+        </div>
       </div>
 
       <div class="invite-banner" id="invite-banner">
         <div><strong id="invite-from"></strong> invited you to a private channel: <strong id="invite-channel-name"></strong></div>
         <div class="invite-banner-row">
           <button class="btn btn-secondary" onclick="declineInvite()">Decline</button>
-          <button class="btn btn-primary" style="background:#000;color:#FFB800;" onclick="acceptInvite()">Accept</button>
+          <button class="btn btn-primary" style="background:var(--grey-900);color:var(--yellow);box-shadow:none;" onclick="acceptInvite()">Accept</button>
         </div>
       </div>
 
       <div class="members-section">
         <div class="section-title">
-          <span>People in this event (<span id="member-count">0</span>)</span>
+          <span>People in event (<span id="member-count">0</span>)</span>
           <span class="channel-pill" id="current-channel-pill">Main Channel</span>
         </div>
         <div id="members-list">
-          <div style="text-align:center;color:#666;padding:20px;">Connecting...</div>
+          <div class="empty-list-msg">Connecting...</div>
         </div>
       </div>
 
-      <button class="btn btn-primary" onclick="joinConversation()">🎙️ Join the Conversation</button>
-      <button class="btn btn-secondary" onclick="openPrivateChannelModal()">➕ Create Private Channel</button>
+      <button class="btn btn-primary" onclick="joinConversation()">Join the Conversation</button>
+      <button class="btn btn-secondary" id="btn-create-channel" onclick="openPrivateChannelModal()" style="display:none;">+ Create Private Channel</button>
       <button class="btn btn-back" onclick="leaveEvent()">← Leave Event</button>
     </div>
 
-    <!-- ================ SCREEN 6: IN CONVERSATION ================ -->
     <div class="screen wide" id="screen-talk">
       <div class="event-info-bar">
         <div class="event-name" id="talk-event-name">Event Name</div>
-        <div class="event-meta">
-          <span class="channel-pill" id="talk-channel-pill" style="font-size:11px;padding:4px 10px;">Main Channel</span>
+        <div class="event-meta" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span class="channel-pill" id="talk-channel-pill">Main Channel</span>
         </div>
       </div>
 
-      <div class="talk-circle" id="talk-circle">
-        <div class="talk-icon" id="talk-icon">🎙️</div>
+      <div class="talk-circle-wrap">
+        <div class="talk-circle" id="talk-circle">
+          <div class="talk-icon" id="talk-icon">MIC</div>
+        </div>
       </div>
 
-      <div style="text-align:center;">
-        <div id="talk-status" style="font-size:18px;font-weight:600;margin-bottom:4px;">Connected</div>
-        <div style="color:#888;font-size:14px;" id="talk-substatus">Speak freely — everyone in this channel can hear you</div>
+      <div class="talk-status-area">
+        <div class="talk-status" id="talk-status">Connected</div>
+        <div class="talk-substatus" id="talk-substatus">Speak freely - everyone in this channel can hear you</div>
       </div>
 
-      <div class="members-section" style="max-height:200px;">
+      <div class="members-section">
         <div class="section-title"><span>In this channel (<span id="talk-member-count">0</span>)</span></div>
         <div id="talk-members-list"></div>
       </div>
 
       <div class="controls-row">
-        <button class="btn btn-mute" id="mute-btn" onclick="toggleMute()">🎙️ Mute</button>
-        <button class="btn btn-danger" onclick="endCall()">📞 End</button>
+        <button class="btn btn-mute" id="mute-btn" onclick="toggleMute()">Mute</button>
+        <button class="btn btn-danger" onclick="endCall()">End</button>
       </div>
     </div>
 
-    <!-- ================ LOADING SCREEN ================ -->
     <div class="screen" id="screen-loading">
       <div class="brand">
-        <div class="brand-logo">🎧</div>
-        <div class="brand-name">HIVEDX</div>
+        <svg class="brand-svg" width="180" height="56" viewBox="0 0 220 68" xmlns="http://www.w3.org/2000/svg" aria-label="HiveDX">
+          <polygon points="58,4 67,9 67,19 58,24 49,19 49,9" fill="#FFB800"/>
+          <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#2D2D2D" letter-spacing="-1">HiVE</text>
+          <text x="138" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#FFB800" letter-spacing="-1">DX</text>
+        </svg>
       </div>
       <div class="loader"></div>
-      <div style="text-align:center;color:#aaa;" id="loading-text">Connecting...</div>
+      <div class="center-text" style="color:var(--grey-500);" id="loading-text">Connecting...</div>
     </div>
 
   </div>
 
-  <!-- ================ PRIVATE CHANNEL MODAL ================ -->
   <div class="modal-overlay" id="private-modal">
     <div class="modal">
       <h3>Create Private Channel</h3>
-      <div class="form-group" style="margin-bottom:16px;">
+      <div class="hint">As the admin you can create a channel and invite people now, or invite them later from the lobby.</div>
+      <div class="form-group" style="margin-bottom:14px;">
         <label>Channel name</label>
-        <input id="in-channel-name" placeholder="e.g., Stage Crew" />
+        <input id="in-channel-name" placeholder="e.g., Stage Crew" autocomplete="off" />
       </div>
-      <div class="section-title">Select people to include</div>
-      <div id="private-members-list" style="max-height:240px;overflow-y:auto;margin-bottom:16px;"></div>
+      <div class="section-title" style="margin-top:6px;">Invite people (optional)</div>
+      <div id="private-members-list" style="max-height:240px;overflow-y:auto;margin-bottom:16px; -webkit-overflow-scrolling:touch;"></div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" onclick="closePrivateChannelModal()">Cancel</button>
         <button class="btn btn-primary" onclick="createPrivateChannel()">Create</button>
@@ -512,7 +681,6 @@
     </div>
   </div>
 
-  <!-- LiveKit Client SDK (pinned to major v2; jsDelivr resolves to latest 2.x) -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
