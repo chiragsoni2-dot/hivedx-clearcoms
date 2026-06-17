@@ -1,82 +1,92 @@
 /* =========================================================
-   HIVEDX Event Clearcoms — frontend logic
-   No build step. Plain browser JavaScript.
-   Talks to /api/token for LiveKit auth tokens.
+   HiveDX Event Clearcoms — frontend logic
+   Plain browser JavaScript. Talks to /api/token for LiveKit auth.
    ========================================================= */
 
 // ---------- Config ----------
-const TOKEN_ENDPOINT = '/api/token'; // Vercel serverless function
+const TOKEN_ENDPOINT = '/api/token';
 
 // ---------- App state ----------
 const state = {
   myName: '',
-  myIdentity: '', // unique id for this user in the room
+  myIdentity: '',
   eventCode: '',
   eventDetails: null, // { client, event, venue, date }
-  room: null, // LiveKit Room object
-  currentChannelRoom: '', // actual LiveKit room name (event code or private channel)
+  isAdmin: false,     // creator of the event = admin
+  room: null,
+  currentChannelRoom: '',
   currentChannelLabel: 'Main Channel',
   isMainChannel: true,
-  pendingInvite: null, // { from, channelName, roomName }
-  participants: new Map(), // identity -> { name, isSpeaking, isMuted }
+  pendingInvite: null,
 };
 
 // ---------- Screen navigation ----------
 function goTo(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
+  // Scroll to top of new screen
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-// ---------- Toast / notifications ----------
-function toast(msg, isError = false) {
+// ---------- Toast ----------
+function toast(msg, kind = 'info') {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
+  t.className = 'toast' + (kind === 'error' ? ' error' : kind === 'success' ? ' success' : '');
   t.style.display = 'block';
-  setTimeout(() => { t.style.display = 'none'; }, 3000);
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
-// ---------- Event code generation ----------
+// ---------- Event code ----------
 function generateEventCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no confusing chars (I,O,1,0)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = 'HIVE-';
   for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
 
+function safeStore(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+function safeRead(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
 // ---------- Event creation (Screen 3) ----------
-// NOTE: name avoids document.createEvent() native method shadowing in inline onclick.
 function submitCreateEvent() {
-  const client = document.getElementById('in-client').value.trim();
-  const event = document.getElementById('in-event').value.trim();
-  const venue = document.getElementById('in-venue').value.trim();
-  const date = document.getElementById('in-date').value.trim();
-  const myName = document.getElementById('in-name-create').value.trim();
+  try {
+    const client = (document.getElementById('in-client').value || '').trim();
+    const event = (document.getElementById('in-event').value || '').trim();
+    const venue = (document.getElementById('in-venue').value || '').trim();
+    const date = (document.getElementById('in-date').value || '').trim();
+    const myName = (document.getElementById('in-name-create').value || '').trim();
 
-  if (!client || !event || !venue || !date || !myName) {
-    return toast('Please fill in every field', true);
+    if (!client || !event || !venue || !date || !myName) {
+      return toast('Please fill in every field', 'error');
+    }
+
+    const code = generateEventCode();
+    const details = { client, event, venue, date };
+
+    safeStore('hivedx-event-' + code, JSON.stringify(details));
+    safeStore('hivedx-last-name', myName);
+    safeStore('hivedx-admin-of-' + code, '1');
+
+    state.myName = myName;
+    state.eventCode = code;
+    state.eventDetails = details;
+    state.isAdmin = true;
+
+    document.getElementById('generated-code').textContent = code;
+    goTo('screen-created');
+  } catch (err) {
+    console.error('submitCreateEvent error:', err);
+    toast('Could not create event: ' + (err.message || 'unknown error'), 'error');
   }
-
-  const code = generateEventCode();
-  const details = { client, event, venue, date };
-
-  // Save locally so the creator can see it again
-  localStorage.setItem('hivedx-event-' + code, JSON.stringify(details));
-  localStorage.setItem('hivedx-last-name', myName);
-
-  state.myName = myName;
-  state.eventCode = code;
-  state.eventDetails = details;
-
-  document.getElementById('generated-code').textContent = code;
-  goTo('screen-created');
 }
 
 function copyCode() {
   const code = document.getElementById('generated-code').textContent;
   navigator.clipboard.writeText(code).then(
-    () => toast('Code copied!'),
-    () => toast('Could not copy — please copy manually', true),
+    () => toast('Code copied!', 'success'),
+    () => toast('Could not copy — please copy manually', 'error'),
   );
 }
 
@@ -86,36 +96,37 @@ function enterEventAsCreator() {
 
 // ---------- Event joining (Screen 4) ----------
 function joinEvent() {
-  const code = document.getElementById('in-code').value.trim().toUpperCase();
-  const myName = document.getElementById('in-name-join').value.trim();
-  if (!code || !myName) return toast('Please enter both fields', true);
+  const code = (document.getElementById('in-code').value || '').trim().toUpperCase();
+  const myName = (document.getElementById('in-name-join').value || '').trim();
+  if (!code || !myName) return toast('Please enter both fields', 'error');
 
-  // Try to load event details if this device created it
-  const stored = localStorage.getItem('hivedx-event-' + code);
+  // If this device created the event, recover details + admin flag from localStorage
+  const stored = safeRead('hivedx-event-' + code);
   const details = stored ? JSON.parse(stored) : null;
+  const adminFlag = safeRead('hivedx-admin-of-' + code) === '1';
 
   state.myName = myName;
   state.eventCode = code;
   state.eventDetails = details;
-  localStorage.setItem('hivedx-last-name', myName);
+  state.isAdmin = adminFlag;
+  safeStore('hivedx-last-name', myName);
 
   enterLobby(code, myName, details);
 }
 
 // ---------- Lobby (Screen 5) ----------
 async function enterLobby(eventCode, displayName, details) {
-  document.getElementById('loading-text').textContent = 'Connecting to event...';
+  document.getElementById('loading-text').textContent = 'Connecting to event…';
   goTo('screen-loading');
 
   try {
     state.myIdentity = displayName + '-' + Math.random().toString(36).slice(2, 8);
-    state.currentChannelRoom = eventCode; // main channel = event code
+    state.currentChannelRoom = eventCode;
     state.currentChannelLabel = 'Main Channel';
     state.isMainChannel = true;
 
     await connectToRoom(eventCode);
 
-    // Render event info
     if (details) {
       document.getElementById('lobby-event-name').textContent = details.event;
       document.getElementById('lobby-event-meta').textContent =
@@ -127,15 +138,17 @@ async function enterLobby(eventCode, displayName, details) {
     document.getElementById('lobby-event-code').textContent = eventCode;
     document.getElementById('current-channel-pill').textContent = state.currentChannelLabel;
 
+    // Admin-only UI
+    document.getElementById('admin-badge').style.display = state.isAdmin ? 'inline-flex' : 'none';
+    document.getElementById('btn-create-channel').style.display = state.isAdmin ? 'inline-flex' : 'none';
+
     refreshMembersList();
     goTo('screen-lobby');
 
-    // If we don't have event details, ask the room for them
     if (!state.eventDetails) requestEventDetails();
-    // If we do have details, share them with anyone who joins later (handled in onParticipantChange)
   } catch (err) {
     console.error(err);
-    toast('Failed to connect: ' + err.message, true);
+    toast('Failed to connect: ' + err.message, 'error');
     goTo('screen-choice');
   }
 }
@@ -150,11 +163,10 @@ async function fetchToken(roomName, identity, name) {
     const text = await res.text();
     throw new Error('Token server: ' + text);
   }
-  return await res.json(); // { token, wsUrl }
+  return await res.json();
 }
 
 async function connectToRoom(roomName) {
-  // Disconnect any existing room
   if (state.room) {
     try { await state.room.disconnect(); } catch (e) {}
     state.room = null;
@@ -162,25 +174,40 @@ async function connectToRoom(roomName) {
 
   const { token, wsUrl } = await fetchToken(roomName, state.myIdentity, state.myName);
 
-  const room = new LivekitClient.Room({
+  // Build room with high-quality voice settings
+  const LK = window.LivekitClient;
+  const audioPreset = LK.AudioPresets?.speech || { maxBitrate: 24000 };
+
+  const room = new LK.Room({
     adaptiveStream: true,
     dynacast: true,
+    // Browser-level audio processing — dramatically improves clarity
+    audioCaptureDefaults: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+      sampleRate: 48000,
+    },
+    publishDefaults: {
+      audioPreset,
+      red: true, // Redundant encoding — resilient to packet loss
+      dtx: true, // Discontinuous transmission — saves bandwidth in silence
+      stopMicTrackOnMute: false,
+    },
   });
 
-  // Wire up events
-  room.on(LivekitClient.RoomEvent.ParticipantConnected, onParticipantConnected);
-  room.on(LivekitClient.RoomEvent.ParticipantDisconnected, onParticipantChange);
-  room.on(LivekitClient.RoomEvent.TrackSubscribed, onTrackSubscribed);
-  room.on(LivekitClient.RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
-  room.on(LivekitClient.RoomEvent.TrackMuted, onParticipantChange);
-  room.on(LivekitClient.RoomEvent.TrackUnmuted, onParticipantChange);
-  room.on(LivekitClient.RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChange);
-  room.on(LivekitClient.RoomEvent.DataReceived, onDataReceived);
-  room.on(LivekitClient.RoomEvent.Disconnected, onDisconnected);
+  room.on(LK.RoomEvent.ParticipantConnected, onParticipantConnected);
+  room.on(LK.RoomEvent.ParticipantDisconnected, onParticipantChange);
+  room.on(LK.RoomEvent.TrackSubscribed, onTrackSubscribed);
+  room.on(LK.RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+  room.on(LK.RoomEvent.TrackMuted, onParticipantChange);
+  room.on(LK.RoomEvent.TrackUnmuted, onParticipantChange);
+  room.on(LK.RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChange);
+  room.on(LK.RoomEvent.DataReceived, onDataReceived);
+  room.on(LK.RoomEvent.Disconnected, onDisconnected);
 
   await room.connect(wsUrl, token);
-
-  // Don't publish mic yet — wait for "Join the Conversation"
   state.room = room;
 }
 
@@ -189,6 +216,8 @@ function onTrackSubscribed(track, publication, participant) {
     const el = track.attach();
     el.id = 'audio-' + participant.identity;
     el.autoplay = true;
+    el.playsInline = true;
+    // Pin to body so iOS doesn't pause it
     document.body.appendChild(el);
   }
 }
@@ -202,24 +231,18 @@ function onParticipantChange() { refreshMembersList(); }
 
 function onParticipantConnected(participant) {
   refreshMembersList();
-  // If I'm in the main channel and have event details, share them with the newcomer
   if (state.isMainChannel && state.eventDetails && participant?.identity) {
     setTimeout(() => broadcastEventDetails([participant.identity]), 500);
   }
 }
 
 function onActiveSpeakersChange(speakers) {
-  // Speakers is array of Participant. Highlight talk circle if I'm speaking.
-  const myId = state.room?.localParticipant?.identity;
-  const iAmSpeaking = speakers.some(p => p.identity === myId);
   refreshMembersList();
-  // Ripple effect could go here
 }
 
 function onDataReceived(payload, participant) {
   try {
-    const text = new TextDecoder().decode(payload);
-    const msg = JSON.parse(text);
+    const msg = JSON.parse(new TextDecoder().decode(payload));
     if (msg.type === 'private_channel_invite') {
       state.pendingInvite = {
         from: participant?.name || participant?.identity || 'Someone',
@@ -228,46 +251,36 @@ function onDataReceived(payload, participant) {
       };
       showInviteBanner();
     } else if (msg.type === 'event_details' && !state.eventDetails) {
-      // Someone in the room is sharing the event metadata — adopt it
       state.eventDetails = msg.details;
       const d = msg.details;
       document.getElementById('lobby-event-name').textContent = d.event;
       document.getElementById('lobby-event-meta').textContent =
         `${d.client} • ${d.venue} • ${d.date}`;
     } else if (msg.type === 'request_event_details' && state.eventDetails && state.isMainChannel) {
-      // A newcomer is asking for details — answer if I have them
       broadcastEventDetails([participant.identity]);
     }
-  } catch (e) { /* ignore malformed messages */ }
+  } catch (e) { /* ignore */ }
 }
 
 async function broadcastEventDetails(toIdentities) {
   if (!state.room || !state.eventDetails) return;
-  const msg = JSON.stringify({ type: 'event_details', details: state.eventDetails });
-  const data = new TextEncoder().encode(msg);
+  const data = new TextEncoder().encode(JSON.stringify({ type: 'event_details', details: state.eventDetails }));
   try {
-    await state.room.localParticipant.publishData(data, {
-      reliable: true,
-      destinationIdentities: toIdentities,
-    });
-  } catch (e) { /* ok */ }
+    await state.room.localParticipant.publishData(data, { reliable: true, destinationIdentities: toIdentities });
+  } catch (e) {}
 }
 
 async function requestEventDetails() {
   if (!state.room || state.eventDetails) return;
-  const msg = JSON.stringify({ type: 'request_event_details' });
-  const data = new TextEncoder().encode(msg);
-  try {
-    await state.room.localParticipant.publishData(data, { reliable: true });
-  } catch (e) { /* ok */ }
+  const data = new TextEncoder().encode(JSON.stringify({ type: 'request_event_details' }));
+  try { await state.room.localParticipant.publishData(data, { reliable: true }); } catch (e) {}
 }
 
-function onDisconnected(reason) {
-  // Clean up audio elements
+function onDisconnected() {
   document.querySelectorAll('audio[id^="audio-"]').forEach(el => el.remove());
 }
 
-// ---------- Members list rendering ----------
+// ---------- Members list ----------
 function refreshMembersList() {
   if (!state.room) return;
   const me = state.room.localParticipant;
@@ -281,32 +294,38 @@ function refreshMembersList() {
 
   const html = all.map(p => {
     const isMe = p.identity === me.identity;
-    const name = p.name || p.identity;
+    const name = (p.name || p.identity).split('-')[0];
     const initial = name.charAt(0).toUpperCase();
     const micPub = Array.from(p.trackPublications.values()).find(t => t.kind === 'audio');
-    const isPublishingAudio = micPub && !micPub.isMuted;
-    const isSubscribed = p.audioTrackPublications && p.audioTrackPublications.size > 0;
+    const hasMicPub = !!micPub;
+    const isLive = hasMicPub && !micPub.isMuted;
     let status, statusClass;
-    if (isMe && !isPublishingAudio) { status = 'In lobby'; statusClass = ''; }
-    else if (isPublishingAudio) { status = 'Live'; statusClass = 'live'; }
+    if (!hasMicPub) { status = 'In lobby'; statusClass = ''; }
+    else if (isLive) { status = 'Live'; statusClass = 'live'; }
     else { status = 'Muted'; statusClass = 'muted'; }
+    const adminTag = (isMe && state.isAdmin) ? ' <span class="member-status admin">Admin</span>' : '';
     return `
       <div class="member-row">
         <div class="member-avatar">${initial}</div>
-        <div class="member-name">${name}${isMe ? ' (you)' : ''}</div>
+        <div class="member-name">${escapeHtml(name)}${isMe ? ' (you)' : ''}</div>
         <div class="member-status ${statusClass}">${status}</div>
+        ${adminTag}
       </div>
     `;
   }).join('');
 
-  lobbyList.innerHTML = html;
+  lobbyList.innerHTML = html || '<div class="empty-list-msg">No one else yet.</div>';
   talkList.innerHTML = html;
 }
 
-// ---------- Join the conversation (Screen 6) ----------
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Join conversation (Screen 6) ----------
 async function joinConversation() {
-  if (!state.room) return toast('Not connected', true);
-  document.getElementById('loading-text').textContent = 'Opening microphone...';
+  if (!state.room) return toast('Not connected', 'error');
+  document.getElementById('loading-text').textContent = 'Opening microphone…';
   goTo('screen-loading');
 
   try {
@@ -321,7 +340,7 @@ async function joinConversation() {
     goTo('screen-talk');
   } catch (err) {
     console.error(err);
-    toast('Microphone error: ' + err.message + '. Please allow mic permission.', true);
+    toast('Microphone error: ' + err.message + '. Please allow mic permission.', 'error');
     goTo('screen-lobby');
   }
 }
@@ -329,9 +348,9 @@ async function joinConversation() {
 // ---------- Mute / unmute ----------
 async function toggleMute() {
   if (!state.room) return;
-  const isCurrentlyEnabled = state.room.localParticipant.isMicrophoneEnabled;
-  await state.room.localParticipant.setMicrophoneEnabled(!isCurrentlyEnabled);
-  setMuteButtonState(isCurrentlyEnabled); // if was enabled, now muted
+  const isEnabled = state.room.localParticipant.isMicrophoneEnabled;
+  await state.room.localParticipant.setMicrophoneEnabled(!isEnabled);
+  setMuteButtonState(isEnabled);
   refreshMembersList();
 }
 
@@ -344,14 +363,14 @@ function setMuteButtonState(isMuted) {
 
   if (isMuted) {
     btn.textContent = '🔇 Unmute';
-    btn.classList.add('active');
+    btn.classList.add('muted');
     icon.textContent = '🔇';
     circle.classList.add('muted');
     status.textContent = 'Muted';
     sub.textContent = 'Others can\'t hear you. Tap Unmute to talk again.';
   } else {
     btn.textContent = '🎙️ Mute';
-    btn.classList.remove('active');
+    btn.classList.remove('muted');
     icon.textContent = '🎙️';
     circle.classList.remove('muted');
     status.textContent = 'Connected';
@@ -362,7 +381,6 @@ function setMuteButtonState(isMuted) {
 // ---------- End call ----------
 async function endCall() {
   if (state.isMainChannel) {
-    // Just stop talking, stay in the event lobby
     if (state.room) {
       try { await state.room.localParticipant.setMicrophoneEnabled(false); } catch (e) {}
     }
@@ -371,103 +389,100 @@ async function endCall() {
     return;
   }
 
-  // We were in a private channel — return to the main event channel
-  document.getElementById('loading-text').textContent = 'Returning to main channel...';
+  // Returning from a private channel to main
+  document.getElementById('loading-text').textContent = 'Returning to main channel…';
   goTo('screen-loading');
   state.currentChannelLabel = 'Main Channel';
   state.isMainChannel = true;
   state.currentChannelRoom = state.eventCode;
   try {
     await connectToRoom(state.eventCode);
-    // Restore lobby UI
     if (state.eventDetails) {
       const d = state.eventDetails;
       document.getElementById('lobby-event-name').textContent = d.event;
-      document.getElementById('lobby-event-meta').textContent =
-        `${d.client} • ${d.venue} • ${d.date}`;
+      document.getElementById('lobby-event-meta').textContent = `${d.client} • ${d.venue} • ${d.date}`;
     } else {
       document.getElementById('lobby-event-name').textContent = 'Event ' + state.eventCode;
       document.getElementById('lobby-event-meta').textContent = 'You joined as ' + state.myName;
     }
     document.getElementById('lobby-event-code').textContent = state.eventCode;
     document.getElementById('current-channel-pill').textContent = 'Main Channel';
+    document.getElementById('btn-create-channel').style.display = state.isAdmin ? 'inline-flex' : 'none';
     refreshMembersList();
     goTo('screen-lobby');
   } catch (err) {
     console.error(err);
-    toast('Could not return to main channel: ' + err.message, true);
+    toast('Could not return to main channel: ' + err.message, 'error');
     goTo('screen-choice');
   }
 }
 
 async function leaveEvent() {
-  if (state.room) {
-    try { await state.room.disconnect(); } catch (e) {}
-    state.room = null;
-  }
+  if (state.room) { try { await state.room.disconnect(); } catch (e) {} state.room = null; }
   document.querySelectorAll('audio[id^="audio-"]').forEach(el => el.remove());
   state.eventCode = '';
   state.eventDetails = null;
+  state.isAdmin = false;
   goTo('screen-choice');
 }
 
 // ---------- Private channels ----------
 function openPrivateChannelModal() {
+  if (!state.isAdmin) {
+    return toast('Only the event admin can create private channels', 'error');
+  }
   if (!state.room) return;
   const others = Array.from(state.room.remoteParticipants.values());
-  if (others.length === 0) {
-    return toast('No one else has joined yet', true);
-  }
   const list = document.getElementById('private-members-list');
-  list.innerHTML = others.map(p => {
-    const name = p.name || p.identity;
-    const initial = name.charAt(0).toUpperCase();
-    return `
-      <div class="member-row">
-        <input type="checkbox" class="member-checkbox" data-identity="${p.identity}" />
-        <div class="member-avatar">${initial}</div>
-        <div class="member-name">${name}</div>
-      </div>
-    `;
-  }).join('');
+  if (others.length === 0) {
+    list.innerHTML = '<div class="empty-list-msg">No one else has joined yet. You can still create the channel and invite people later.</div>';
+  } else {
+    list.innerHTML = others.map(p => {
+      const name = (p.name || p.identity).split('-')[0];
+      const initial = name.charAt(0).toUpperCase();
+      return `
+        <div class="member-row">
+          <input type="checkbox" class="member-checkbox" data-identity="${escapeAttr(p.identity)}" />
+          <div class="member-avatar">${initial}</div>
+          <div class="member-name">${escapeHtml(name)}</div>
+        </div>
+      `;
+    }).join('');
+  }
   document.getElementById('in-channel-name').value = '';
   document.getElementById('private-modal').classList.add('active');
 }
+
+function escapeAttr(s) { return escapeHtml(s); }
 
 function closePrivateChannelModal() {
   document.getElementById('private-modal').classList.remove('active');
 }
 
 async function createPrivateChannel() {
-  const channelName = document.getElementById('in-channel-name').value.trim();
-  if (!channelName) return toast('Give the channel a name', true);
+  const channelName = (document.getElementById('in-channel-name').value || '').trim();
+  if (!channelName) return toast('Give the channel a name', 'error');
 
   const checkboxes = document.querySelectorAll('#private-members-list input:checked');
   const selectedIdentities = Array.from(checkboxes).map(cb => cb.dataset.identity);
-  if (selectedIdentities.length === 0) {
-    return toast('Select at least one person', true);
+
+  const privRoomName = state.eventCode + '-PRIV-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+
+  if (selectedIdentities.length > 0) {
+    const data = new TextEncoder().encode(JSON.stringify({
+      type: 'private_channel_invite',
+      channelName,
+      roomName: privRoomName,
+    }));
+    try {
+      await state.room.localParticipant.publishData(data, { reliable: true, destinationIdentities: selectedIdentities });
+      toast(`Invite sent to ${selectedIdentities.length} ${selectedIdentities.length === 1 ? 'person' : 'people'}`, 'success');
+    } catch (e) { console.warn('invite send failed', e); }
+  } else {
+    toast('Channel created. You can invite people later.', 'success');
   }
 
-  // Build a unique room name for this private channel
-  const privRoomName = state.eventCode + '-PRIV-' +
-    Math.random().toString(36).slice(2, 7).toUpperCase();
-
-  // Send invite to selected participants via LiveKit data channel
-  const msg = JSON.stringify({
-    type: 'private_channel_invite',
-    channelName,
-    roomName: privRoomName,
-  });
-  const data = new TextEncoder().encode(msg);
-  await state.room.localParticipant.publishData(data, {
-    reliable: true,
-    destinationIdentities: selectedIdentities,
-  });
-
   closePrivateChannelModal();
-  toast(`Invite sent to ${selectedIdentities.length} ${selectedIdentities.length === 1 ? 'person' : 'people'}`);
-
-  // Move myself to the new channel
   state.currentChannelLabel = channelName;
   state.isMainChannel = false;
   await switchToRoom(privRoomName);
@@ -475,7 +490,7 @@ async function createPrivateChannel() {
 
 function showInviteBanner() {
   if (!state.pendingInvite) return;
-  document.getElementById('invite-from').textContent = state.pendingInvite.from;
+  document.getElementById('invite-from').textContent = state.pendingInvite.from.split('-')[0];
   document.getElementById('invite-channel-name').textContent = state.pendingInvite.channelName;
   document.getElementById('invite-banner').classList.add('active');
 }
@@ -496,12 +511,11 @@ async function acceptInvite() {
 function declineInvite() { hideInviteBanner(); }
 
 async function switchToRoom(roomName) {
-  document.getElementById('loading-text').textContent = 'Switching channel...';
+  document.getElementById('loading-text').textContent = 'Switching channel…';
   goTo('screen-loading');
   try {
     state.currentChannelRoom = roomName;
     await connectToRoom(roomName);
-    // Auto-join conversation in private channel
     await state.room.localParticipant.setMicrophoneEnabled(true);
     document.getElementById('talk-channel-pill').textContent = state.currentChannelLabel;
     document.getElementById('talk-event-name').textContent = state.currentChannelLabel;
@@ -510,24 +524,20 @@ async function switchToRoom(roomName) {
     goTo('screen-talk');
   } catch (err) {
     console.error(err);
-    toast('Could not switch channels: ' + err.message, true);
+    toast('Could not switch channels: ' + err.message, 'error');
     goTo('screen-lobby');
   }
 }
 
 // ---------- Boot ----------
 document.addEventListener('DOMContentLoaded', () => {
-  // Pre-fill last used name
-  const lastName = localStorage.getItem('hivedx-last-name');
+  const lastName = safeRead('hivedx-last-name');
   if (lastName) {
     document.getElementById('in-name-create').value = lastName;
     document.getElementById('in-name-join').value = lastName;
   }
-  // Pre-fill today's date
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('in-date').value = today;
+  document.getElementById('in-date').value = new Date().toISOString().split('T')[0];
 
-  // Disconnect cleanly on page close
   window.addEventListener('beforeunload', () => {
     if (state.room) state.room.disconnect();
   });
