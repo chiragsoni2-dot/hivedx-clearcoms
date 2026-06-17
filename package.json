@@ -1,0 +1,10 @@
+{
+  "name": "hivedx-clearcoms",
+  "version": "1.0.0",
+  "description": "HIVEDX Event Clearcoms — open-network voice for event crews",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "livekit-server-sdk": "^2.7.0"
+  }
+}

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIVEDX Event Clearcoms</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+      color: #fff;
+      overflow: hidden;
+    }
+    .app {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .screen {
+      width: 100%;
+      max-width: 480px;
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .screen.active { display: flex; }
+    .screen.wide { max-width: 720px; }
+
+    /* Logo & Branding */
+    .brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .brand-logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    .brand-name {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #FFB800;
+    }
+    .brand-sub {
+      font-size: 14px;
+      color: #888;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    h2 { font-size: 18px; color: #aaa; font-weight: 500; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: #FFB800;
+      color: #000;
+    }
+    .btn-primary:hover { background: #ffc933; transform: translateY(-2px); }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    .btn-danger {
+      background: #e63946;
+      color: #fff;
+    }
+    .btn-danger:hover { background: #f04557; }
+    .btn-mute { background: #444; color: #fff; }
+    .btn-mute.active { background: #FFB800; color: #000; }
+    .btn-back {
+      background: transparent;
+      color: #888;
+      padding: 8px;
+      width: auto;
+      font-size: 14px;
+      align-self: flex-start;
+    }
+
+    /* Forms */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: #aaa; font-weight: 500; }
+    .form-group input {
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #FFB800;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Event code display */
+    .event-code-card {
+      background: rgba(255, 184, 0, 0.1);
+      border: 2px dashed #FFB800;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .event-code-label { font-size: 13px; color: #aaa; margin-bottom: 8px; }
+    .event-code-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #FFB800;
+      letter-spacing: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .event-code-hint { font-size: 13px; color: #888; margin-top: 12px; }
+
+    /* Lobby */
+    .event-info-bar {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .event-info-bar .event-name { font-size: 18px; font-weight: 600; }
+    .event-info-bar .event-meta { font-size: 13px; color: #888; }
+    .event-info-bar .event-code-pill {
+      display: inline-block;
+      background: #FFB800;
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      width: fit-content;
+    }
+
+    .members-section {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .section-title {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .member-row:last-child { border: none; }
+    .member-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFB800, #ff8800);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #000;
+      font-size: 14px;
+    }
+    .member-name { flex: 1; font-size: 15px; }
+    .member-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255, 184, 0, 0.2);
+      color: #FFB800;
+    }
+    .member-status.live { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+    .member-status.muted { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+
+    .member-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: #FFB800;
+    }
+
+    /* In conversation screen */
+    .talk-circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,184,0,0.3) 0%, rgba(255,184,0,0) 70%);
+      margin: 20px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .talk-circle::before {
+      content: '';
+      position: absolute;
+      inset: 40px;
+      border-radius: 50%;
+      background: #FFB800;
+      animation: pulse 2s infinite;
+    }
+    .talk-circle.muted::before {
+      background: #444;
+      animation: none;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    .talk-icon {
+      position: relative;
+      z-index: 2;
+      font-size: 48px;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .controls-row .btn { padding: 18px; }
+
+    .channel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 184, 0, 0.15);
+      border: 1px solid rgba(255, 184, 0, 0.4);
+      color: #FFB800;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      align-self: flex-start;
+    }
+
+    /* Modal for private channel */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #1a1a2e;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .modal h3 { margin-bottom: 16px; font-size: 18px; }
+
+    /* Notifications */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #FFB800;
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .toast.error { background: #e63946; color: #fff; }
+
+    .invite-banner {
+      background: linear-gradient(135deg, #FFB800, #ff8800);
+      color: #000;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .invite-banner.active { display: block; }
+    .invite-banner-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .invite-banner-row .btn {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .small-text { font-size: 12px; color: #666; text-align: center; }
+    .loader {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #FFB800;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <div class="app">
+
+    <!-- ================ SCREEN 1: WELCOME ================ -->
+    <div class="screen active" id="screen-welcome">
+      <div class="brand">
+        <div class="brand-logo">🎧</div>
+        <div class="brand-name">HIVEDX</div>
+        <div class="brand-sub">EVENT CLEARCOMS</div>
+      </div>
+      <p style="text-align:center; color:#aaa; line-height:1.5;">
+        Open-network voice for your event crew.<br/>
+        No dialing. No headsets. Just talk.
+      </p>
+      <button class="btn btn-primary" onclick="goTo('screen-choice')">Enter</button>
+    </div>
+
+    <!-- ================ SCREEN 2: CREATE OR JOIN ================ -->
+    <div class="screen" id="screen-choice">
+      <div class="brand">
+        <div class="brand-logo">🎧</div>
+        <div class="brand-name">HIVEDX</div>
+      </div>
+      <h1 style="text-align:center;">What would you like to do?</h1>
+      <button class="btn btn-primary" onclick="goTo('screen-create')">Create an Event</button>
+      <button class="btn btn-secondary" onclick="goTo('screen-join')">Join an Event</button>
+    </div>
+
+    <!-- ================ SCREEN 3: CREATE EVENT ================ -->
+    <div class="screen" id="screen-create">
+      <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
+      <h1>Create an Event</h1>
+      <h2>Fill in the details to generate an event code.</h2>
+
+      <div class="form-group">
+        <label>Client Name</label>
+        <input id="in-client" placeholder="e.g., Acme Corp" />
+      </div>
+      <div class="form-group">
+        <label>Event Name</label>
+        <input id="in-event" placeholder="e.g., Annual Conference 2026" />
+      </div>
+      <div class="form-group">
+        <label>Venue</label>
+        <input id="in-venue" placeholder="e.g., Mumbai Convention Hall" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input id="in-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label>Your Name (so the team can see who you are)</label>
+        <input id="in-name-create" placeholder="e.g., Chirag" />
+      </div>
+      <button class="btn btn-primary" onclick="createEvent()">Generate Event Code</button>
+    </div>
+
+    <!-- ================ SCREEN 3b: EVENT CODE GENERATED ================ -->
+    <div class="screen" id="screen-created">
+      <h1 style="text-align:center;">Your event is ready!</h1>
+      <div class="event-code-card">
+        <div class="event-code-label">EVENT CODE</div>
+        <div class="event-code-value" id="generated-code">------</div>
+        <div class="event-code-hint">Share this code with your team so they can join.</div>
+      </div>
+      <button class="btn btn-secondary" onclick="copyCode()">📋 Copy Code</button>
+      <button class="btn btn-primary" onclick="enterEventAsCreator()">Enter Event</button>
+    </div>
+
+    <!-- ================ SCREEN 4: JOIN EVENT ================ -->
+    <div class="screen" id="screen-join">
+      <button class="btn btn-back" onclick="goTo('screen-choice')">← Back</button>
+      <h1>Join an Event</h1>
+      <h2>Enter the code shared with you.</h2>
+
+      <div class="form-group">
+        <label>Event Code</label>
+        <input id="in-code" placeholder="e.g., HIVE-X7K9P" maxlength="11" style="text-transform: uppercase; letter-spacing: 2px; font-size: 20px; text-align: center;" />
+      </div>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input id="in-name-join" placeholder="e.g., Chirag" />
+      </div>
+      <button class="btn btn-primary" onclick="joinEvent()">Enter Event</button>
+    </div>
+
+    <!-- ================ SCREEN 5: EVENT LOBBY ================ -->
+    <div class="screen wide" id="screen-lobby">
+      <div class="event-info-bar">
+        <div class="event-name" id="lobby-event-name">Event Name</div>
+        <div class="event-meta" id="lobby-event-meta">Client • Venue • Date</div>
+        <div class="event-code-pill" id="lobby-event-code">CODE</div>
+      </div>
+
+      <div class="invite-banner" id="invite-banner">
+        <div><strong id="invite-from"></strong> invited you to a private channel: <strong id="invite-channel-name"></strong></div>
+        <div class="invite-banner-row">
+          <button class="btn btn-secondary" onclick="declineInvite()">Decline</button>
+          <button class="btn btn-primary" style="background:#000;color:#FFB800;" onclick="acceptInvite()">Accept</button>
+        </div>
+      </div>
+
+      <div class="members-section">
+        <div class="section-title">
+          <span>People in this event (<span id="member-count">0</span>)</span>
+          <span class="channel-pill" id="current-channel-pill">Main Channel</span>
+        </div>
+        <div id="members-list">
+          <div style="text-align:center;color:#666;padding:20px;">Connecting...</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="joinConversation()">🎙️ Join the Conversation</button>
+      <button class="btn btn-secondary" onclick="openPrivateChannelModal()">➕ Create Private Channel</button>
+      <button class="btn btn-back" onclick="leaveEvent()">← Leave Event</button>
+    </div>
+
+    <!-- ================ SCREEN 6: IN CONVERSATION ================ -->
+    <div class="screen wide" id="screen-talk">
+      <div class="event-info-bar">
+        <div class="event-name" id="talk-event-name">Event Name</div>
+        <div class="event-meta">
+          <span class="channel-pill" id="talk-channel-pill" style="font-size:11px;padding:4px 10px;">Main Channel</span>
+        </div>
+      </div>
+
+      <div class="talk-circle" id="talk-circle">
+        <div class="talk-icon" id="talk-icon">🎙️</div>
+      </div>
+
+      <div style="text-align:center;">
+        <div id="talk-status" style="font-size:18px;font-weight:600;margin-bottom:4px;">Connected</div>
+        <div style="color:#888;font-size:14px;" id="talk-substatus">Speak freely — everyone in this channel can hear you</div>
+      </div>
+
+      <div class="members-section" style="max-height:200px;">
+        <div class="section-title"><span>In this channel (<span id="talk-member-count">0</span>)</span></div>
+        <div id="talk-members-list"></div>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn btn-mute" id="mute-btn" onclick="toggleMute()">🎙️ Mute</button>
+        <button class="btn btn-danger" onclick="endCall()">📞 End</button>
+      </div>
+    </div>
+
+    <!-- ================ LOADING SCREEN ================ -->
+    <div class="screen" id="screen-loading">
+      <div class="brand">
+        <div class="brand-logo">🎧</div>
+        <div class="brand-name">HIVEDX</div>
+      </div>
+      <div class="loader"></div>
+      <div style="text-align:center;color:#aaa;" id="loading-text">Connecting...</div>
+    </div>
+
+  </div>
+
+  <!-- ================ PRIVATE CHANNEL MODAL ================ -->
+  <div class="modal-overlay" id="private-modal">
+    <div class="modal">
+      <h3>Create Private Channel</h3>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Channel name</label>
+        <input id="in-channel-name" placeholder="e.g., Stage Crew" />
+      </div>
+      <div class="section-title">Select people to include</div>
+      <div id="private-members-list" style="max-height:240px;overflow-y:auto;margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="closePrivateChannelModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="createPrivateChannel()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LiveKit Client SDK (pinned to major v2; jsDelivr resolves to latest 2.x) -->
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
