@@ -45,7 +45,8 @@ function generateEventCode() {
 }
 
 // ---------- Event creation (Screen 3) ----------
-function createEvent() {
+// NOTE: name avoids document.createEvent() native method shadowing in inline onclick.
+function submitCreateEvent() {
   const client = document.getElementById('in-client').value.trim();
   const event = document.getElementById('in-event').value.trim();
   const venue = document.getElementById('in-venue').value.trim();
